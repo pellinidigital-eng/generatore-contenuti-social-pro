@@ -37,6 +37,19 @@ type GeneratedContent = {
   mistakes: string[];
 };
 
+type StrategicInput = {
+  niche: string;
+  offer: string;
+  audience: string;
+  problem: string;
+  result: string;
+  platform: Platform;
+  goal: Goal;
+  tone: Tone;
+  contentType: ContentType;
+  opener: string;
+};
+
 const platforms: Platform[] = ["Instagram", "TikTok", "Facebook", "YouTube Shorts", "LinkedIn"];
 const goals: Goal[] = ["vendere", "ottenere contatti", "aumentare engagement", "educare", "creare fiducia"];
 const tones: Tone[] = ["diretto", "educativo", "persuasivo", "amichevole", "professionale", "motivazionale"];
@@ -379,7 +392,7 @@ function generateLocalContent(form: GeneratorForm): GeneratedContent {
 }
 
 function normalizeForm(form: GeneratorForm) {
-  return {
+  const base: StrategicInput = {
     niche: clean(form.niche),
     offer: clean(form.offer),
     audience: clean(form.audience),
@@ -391,64 +404,72 @@ function normalizeForm(form: GeneratorForm) {
     contentType: form.contentType,
     opener: toneOpener(form.tone)
   };
+
+  return {
+    ...base,
+    strategy: createStrategicContext(base)
+  };
 }
 
 function buildHooks(d: ReturnType<typeof normalizeForm>) {
+  const s = d.strategy;
+
   return [
-    `Se lavori in ${d.niche} e il tuo pubblico sente che ${d.problem}, ${d.offer} può diventare il punto di partenza per aiutarlo a ${d.result} senza perdere altro tempo su ${d.platform}.`,
-    `L'errore più comune in ${d.niche}: parlare del prodotto prima di mostrare a ${d.audience} come uscire da "${d.problem}". Parti da questo, poi presenta ${d.offer}.`,
-    `${capitalize(d.audience)}: quanto tempo stai ancora perdendo perché ${d.problem}? Questo ${d.contentType} ti mostra come avvicinarti a ${d.result} con ${d.offer}.`,
-    `Prima: ${d.problem}. Dopo: un percorso più chiaro per ${d.result}. Nel mezzo c'è ${d.offer}, spiegato in modo ${d.tone} per ${d.platform}.`,
-    `Mito da sfatare in ${d.niche}: non serve comunicare di più, serve comunicare meglio il legame tra ${d.problem}, ${d.offer} e ${d.result}.`,
-    `Se continui a rimandare i contenuti su ${d.platform}, il problema non è la creatività: è che non stai partendo dal dolore reale di ${d.audience}, cioè ${d.problem}.`,
-    `Vuoi ${d.result}? Allora smetti di creare contenuti generici e usa ${d.offer} per mostrare a ${d.audience} un passaggio concreto da applicare subito.`,
-    `La paura nascosta di ${d.audience} non è comprare ${d.offer}: è restare bloccato in "${d.problem}" senza vedere una strada credibile verso ${d.result}.`,
-    `C'è un'opportunità enorme per chi opera in ${d.niche}: trasformare ogni contenuto su ${d.platform} in una risposta pratica al problema "${d.problem}".`,
-    `Salva questo ${d.contentType}: ti aiuta a spiegare ${d.offer} a ${d.audience} partendo da ciò che conta davvero, cioè ${d.result}.`
-  ];
+    `Il vero motivo per cui ${s.audienceView} resta bloccato raramente è quello che sembra all'inizio.`,
+    `Prima di cercare un cambiamento più grande, guarda l'errore che sta rendendo tutto più complicato del necessario.`,
+    `Se ogni tentativo parte bene e poi si inceppa, forse non serve più motivazione: serve un percorso più facile da mantenere.`,
+    `La maggior parte delle persone prova ad accelerare, ma ignora il punto in cui perde chiarezza e continuità.`,
+    `Non devi per forza ${s.falseBeliefLower} per iniziare a vedere un progresso più stabile.`,
+    `Il passaggio più sottovalutato è questo: rendere semplice il primo passo prima di chiedere costanza.`,
+    `Cosa succede quando smetti di inseguire la soluzione perfetta e inizi da una scelta più sostenibile?`,
+    `All'inizio sembra solo mancanza di tempo. Poi scopri che il problema è decidere cosa fare quando arrivano dubbi e distrazioni.`,
+    `${s.realisticPromise}. È una promessa meno rumorosa, ma molto più credibile.`,
+    `Tra improvvisare e seguire una direzione chiara c'è una differenza enorme: la seconda riduce il peso mentale.`
+  ].map((hook) => adaptHookForPlatform(hook, d));
 }
 
 function buildCaptions(d: ReturnType<typeof normalizeForm>) {
+  const s = d.strategy;
   const bases = [
     {
-      title: `Da "${d.problem}" a "${d.result}"`,
-      angle: `Molte persone nel mondo ${d.niche} pensano di dover semplicemente pubblicare di più su ${d.platform}. In realtà, se il pubblico vive il problema "${d.problem}", un contenuto in più non basta: serve un messaggio che faccia capire subito perché ${d.offer} è collegato al risultato che desidera.`
+      title: "Educativa: il blocco non è dove sembra",
+      angle: `Il punto non è spingere le persone a fare di più. Spesso il blocco nasce prima: quando ${s.audienceView} non capisce quale scelta sia davvero adatta, semplice e sostenibile.`
     },
     {
-      title: `Il messaggio che ${d.audience} deve sentire`,
-      angle: `Quando parli a ${d.audience}, il punto non è riempire il post di caratteristiche. Il punto è far riconoscere il momento esatto in cui nasce il problema: ${d.problem}. Solo dopo puoi introdurre ${d.offer} come soluzione concreta e credibile.`
+      title: "Emotiva: quando riparti sempre da capo",
+      angle: `C'è una frustrazione che pesa più del problema in sé: la sensazione di averci già provato, di aver perso continuità e di non sapere se questa volta sarà diverso.`
     },
     {
-      title: `Perché il tuo contenuto non deve sembrare una vendita`,
-      angle: `Un contenuto efficace per ${d.platform} non forza la decisione. Accompagna. Parte da una situazione reale, mostra cosa sta bloccando ${d.audience}, spiega un passaggio semplice e poi collega tutto a ${d.offer}.`
+      title: "Vendita: rendere la scelta più semplice",
+      angle: `Una buona offerta non deve sembrare una scorciatoia miracolosa. Deve far capire perché il prossimo passo è più chiaro, più guidato e meno pesante da affrontare.`
     },
     {
-      title: `Una prospettiva più utile per ${d.niche}`,
-      angle: `Il tuo pubblico non cerca solo informazioni: cerca sollievo, chiarezza e un modo più semplice per avvicinarsi a ${d.result}. Se comunichi ${d.offer} partendo da questo, il contenuto diventa subito più rilevante.`
+      title: "Storytelling: il momento in cui tutto si ferma",
+      angle: `Succede spesso così: all'inizio c'è entusiasmo, poi arrivano troppe opzioni, piccoli imprevisti e la sensazione di non sapere più qual è la strada giusta.`
     },
     {
-      title: `Il contenuto che crea fiducia prima della CTA`,
-      angle: `Prima di chiedere un'azione, devi far sentire a ${d.audience} che hai capito il problema. Nel tuo caso significa nominare ${d.problem}, spiegare perché succede e mostrare come ${d.offer} può aiutare a costruire ${d.result}.`
+      title: "Engagement: qual è il tuo ostacolo vero?",
+      angle: `La domanda più utile non è "cosa vuoi ottenere?", ma "cosa ti fa fermare proprio quando dovresti continuare?". Le risposte spesso sono molto più concrete di quanto sembrino.`
     },
     {
       title: `Il ponte tra bisogno e decisione`,
-      angle: `Nel settore ${d.niche}, il pubblico non decide solo perché vede un'offerta. Decide quando capisce che quella proposta parla del suo problema reale: ${d.problem}. Per questo ${d.offer} deve essere presentato come ponte tra la situazione attuale e ${d.result}.`
+      angle: `Nel settore ${d.niche}, il pubblico non decide solo perché vede un'offerta. Decide quando sente che qualcuno ha capito cosa lo blocca davvero e gli propone un passo meno confuso.`
     },
     {
       title: `La caption che parte dalla vita reale`,
-      angle: `Un buon contenuto per ${d.platform} deve sembrare scritto per una persona precisa. Nel tuo caso quella persona è ${d.audience}, con una frustrazione chiara: ${d.problem}. Se parti da qui, il messaggio diventa subito più credibile.`
+      angle: `Un buon contenuto per ${d.platform} deve sembrare scritto per una situazione precisa, non per una categoria astratta. Deve far dire: "ok, questa cosa parla proprio del punto in cui mi blocco".`
     },
     {
       title: `Il modo più semplice per spiegare ${d.offer}`,
-      angle: `Se provi a spiegare tutto, rischi di confondere. Se invece parti da un solo problema, "${d.problem}", puoi mostrare in modo ${d.tone} perché ${d.offer} aiuta ${d.audience} ad avvicinarsi a ${d.result}.`
+      angle: `Se provi a spiegare tutto, rischi di confondere. Se invece parti da una sola tensione concreta, puoi mostrare in modo ${d.tone} perché ${d.offer} riduce attrito e rende il percorso più praticabile.`
     },
     {
       title: `Una vendita più naturale`,
-      angle: `Vendere su ${d.platform} non significa spingere. Significa far vedere a ${d.audience} che hai compreso il blocco, che sai perché ${d.problem} pesa nella quotidianità e che ${d.offer} può essere una scelta sensata.`
+      angle: `Vendere su ${d.platform} non significa spingere. Significa far vedere che il problema è stato letto bene, che l'ostacolo non viene banalizzato e che la proposta ha un ruolo chiaro.`
     },
     {
       title: `Da contenuto qualsiasi a contenuto utile`,
-      angle: `La differenza tra un contenuto ignorato e uno salvato sta nella specificità. Se parli di ${d.niche}, cita ${d.audience}, nomina ${d.problem} e collega il tutto a un risultato concreto: ${d.result}.`
+      angle: `La differenza tra un contenuto ignorato e uno salvato sta nella prospettiva. Non basta parlare di ${d.niche}: devi trasformare una situazione comune in una lettura più lucida.`
     }
   ];
 
@@ -456,155 +477,166 @@ function buildCaptions(d: ReturnType<typeof normalizeForm>) {
     title: base.title,
     text: `${base.angle}
 
-Il primo passo è rendere specifico il contenuto: non parlare a "tutti", parla a ${d.audience}. Usa esempi vicini alla loro giornata, alle obiezioni che hanno prima di fidarsi e al fastidio concreto che provano quando ${d.problem}. Su ${d.platform}, questo è ancora più importante perché l'attenzione è breve e le persone decidono in pochi secondi se continuare a leggere o scorrere oltre.
+Il primo passo è rendere il contenuto meno ovvio. Invece di ripetere il bisogno dichiarato, entra nel momento in cui nasce il blocco: ${s.painPoint}. Questo rende il testo più umano, perché non descrive solo un obiettivo, ma la fatica concreta che le persone incontrano prima di arrivarci.
 
-Con un tono ${d.tone}, puoi spiegare ${d.offer} senza sembrare freddo o generico: parti dal problema, mostra una conseguenza concreta, poi presenta un piccolo cambio di prospettiva. Per esempio: "non ti manca solo tempo, ti manca una struttura che trasformi le idee in contenuti pubblicabili". Questo rende il beneficio più chiaro e collega il tuo lavoro al risultato desiderato: ${d.result}.
+Con un tono ${d.tone}, puoi educare senza appesantire: spiega che ${s.falseBeliefLower} non è l'unica strada. Il cambio di prospettiva è più forte quando mostri un'alternativa semplice: ${s.commonMistakeLower}, poi costruire un primo passo guidato, realistico e facile da ripetere. Questo rende il contenuto più credibile su ${d.platform}, soprattutto se l'obiettivo è ${d.goal}.
 
-Il beneficio concreto è che ${d.audience} non percepisce più ${d.offer} come una cosa astratta, ma come un aiuto pratico per uscire da una situazione frustrante. Se l'obiettivo è ${d.goal}, chiudi con una CTA coerente: invita a salvare, commentare, scrivere in privato o chiedere informazioni, senza promettere risultati garantiti.
+Qui entra in modo naturale ${d.offer}: non come soluzione magica, ma come struttura che aiuta a passare da confusione a chiarezza. Il beneficio non è solo pratico; è anche emotivo: ${s.emotionalBenefit}. Ed è proprio questa promessa realistica, ${s.realisticPromiseLower}, che rende la comunicazione più adulta e meno da template.
 
 CTA: ${captionCta(d, index)}`
   }));
 }
 
 function buildCtas(d: ReturnType<typeof normalizeForm>) {
+  const s = d.strategy;
   const ctas = [
-    `Scrivimi "${keyword(d)}" se vuoi capire come usare ${d.offer} per avvicinarti a ${d.result}.`,
-    `Salva questo contenuto se lavori in ${d.niche} e vuoi smettere di restare bloccato su "${d.problem}".`,
-    `Commenta con la tua difficoltà principale su ${d.platform}: ti rispondo con uno spunto pratico per ${d.result}.`,
-    `Se sei ${d.audience} e vuoi una strada più chiara, parti da ${d.offer} e chiedimi informazioni.`,
-    `Condividilo con qualcuno che opera in ${d.niche} e sta ancora cercando di risolvere "${d.problem}".`,
-    `Vuoi trasformare ${d.problem} in un contenuto più forte? Usa questo schema e adattalo a ${d.offer}.`,
-    `Mandami un messaggio se vuoi comunicare ${d.offer} con un tono più ${d.tone} e meno generico.`,
-    `Salva questa traccia: è pensata per ${d.audience} che vuole ${d.result} senza comunicare a caso.`,
-    `Usala per il tuo prossimo ${d.contentType} su ${d.platform} e parti dal problema, non dalla promozione.`,
-    `Se questo parla della tua situazione, il prossimo passo è rendere ${d.offer} ancora più specifico per ${d.audience}.`
+    `Scrivimi "${keyword(d)}" se vuoi trasformare questa situazione in un percorso più chiaro e sostenibile.`,
+    `Salva questo contenuto se ti serve una traccia meno generica per parlare a chi è fermo tra dubbi, tentativi e troppe opzioni.`,
+    `Commenta con l'ostacolo che vedi più spesso: ti rispondo con un'idea di contenuto da usare su ${d.platform}.`,
+    `Se vuoi comunicare ${d.offer} senza sembrare uguale a tutti, parti da questo cambio di prospettiva.`,
+    `Condividilo con chi continua a provare soluzioni diverse ma non ha ancora trovato una direzione semplice da seguire.`,
+    `Vuoi rendere più credibile la tua proposta? Parti da ${s.commonMistakeLower} e mostra un'alternativa concreta.`,
+    `Mandami un messaggio se vuoi trasformare ${d.offer} in un contenuto più ${d.tone}, utile e meno promozionale.`,
+    `Salva questa traccia: ti aiuta a parlare del desiderio finale senza ripetere sempre le stesse parole.`,
+    `Usala per il tuo prossimo ${d.contentType}: prima mostra il blocco, poi la nuova prospettiva, poi la CTA.`,
+    `Se questa lettura ti sembra familiare, il prossimo passo è rendere il messaggio più specifico per ${s.audienceView}.`
   ];
 
   return rotate(ctas, seedFrom(d)).slice(0, 5);
 }
 
 function buildReel(d: ReturnType<typeof normalizeForm>) {
+  const s = d.strategy;
+
   return {
     duration: d.platform === "LinkedIn" ? "35-50 secondi" : "18-28 secondi",
     scenes: [
       {
         time: "0-2 secondi",
         scene: "Apertura con problema riconoscibile",
-        screenText: `${capitalize(d.problem)}?`,
-        voiceover: `${d.opener} Se sei ${d.audience}, probabilmente conosci bene questo problema: ${d.problem}.`,
-        visual: `Primo piano, gesto rapido o schermata che mostra il blocco concreto legato a ${d.niche}.`
+        screenText: "Non è solo questione di volontà",
+        voiceover: `${d.opener} Il blocco spesso nasce quando il percorso sembra più complicato del risultato che vuoi ottenere.`,
+        visual: "Primo piano o schermata con troppe opzioni aperte: rende visiva la confusione, senza ripetere l'input alla lettera."
       },
       {
         time: "2-5 secondi",
         scene: "Conseguenza concreta",
-        screenText: `Il rischio: restare fermo`,
-        voiceover: `Il punto è che finché questo resta confuso, diventa difficile arrivare a ${d.result}, anche se l'offerta è valida.`,
-        visual: `Mostra una checklist incompleta, un calendario vuoto o un esempio reale del problema vissuto da ${d.audience}.`
+        screenText: "Troppi tentativi, poca direzione",
+        voiceover: `Quando ${s.audienceView} prova a risolvere tutto insieme, il rischio è fermarsi prima di vedere un progresso stabile.`,
+        visual: `Mostra una checklist incompleta, un calendario vuoto o un prima/dopo concettuale legato a ${d.niche}.`
       },
       {
         time: "5-8 secondi",
         scene: "Cambio di prospettiva",
-        screenText: `Parti dal problema, non dal prodotto`,
-        voiceover: `Invece di spiegare subito ${d.offer}, parti dalla situazione che il pubblico vive ogni giorno e collega la soluzione a un beneficio pratico.`,
-        visual: `Taglio veloce con tre parole chiave: problema, soluzione, risultato.`
+        screenText: "Prima semplifica, poi accelera",
+        voiceover: "Invece di aggiungere pressione, funziona meglio ridurre l'attrito: meno passaggi confusi, più continuità, una scelta concreta alla volta.",
+        visual: "Taglio veloce con tre parole chiave: chiarezza, primo passo, continuità."
       },
       {
         time: "Finale",
         scene: "CTA coerente con l'obiettivo",
-        screenText: `${capitalize(d.result)} con più chiarezza`,
-        voiceover: `Se vuoi usare ${d.offer} per aiutare ${d.audience} a ${d.result}, salva questo video o scrivimi per saperne di più.`,
-        visual: `Schermata finale pulita con CTA grande, riferimento a ${d.platform} e promessa realistica.`
+        screenText: `${capitalize(s.desire)} senza complicarti tutto`,
+        voiceover: `${d.offer} serve proprio a questo: dare una struttura più semplice per avvicinarsi al risultato senza inseguire soluzioni casuali.`,
+        visual: `Schermata finale pulita con CTA grande, promessa realistica e riferimento visivo a ${d.platform}.`
       }
     ]
   };
 }
 
 function buildCarousel(d: ReturnType<typeof normalizeForm>) {
+  const s = d.strategy;
+
   return [
     {
       slide: 1,
       role: "titolo forte",
-      title: `${capitalize(d.audience)}: smetti di bloccarti su "${d.problem}"`,
-      text: `Una guida rapida per capire come ${d.offer} può aiutarti a ${d.result}.`,
-      visual: `Titolo grande, contrasto forte, elemento visivo collegato a ${d.niche}.`
+      title: "Il blocco non è dove pensi",
+      text: "Una guida rapida per trasformare confusione e tentativi casuali in un percorso più semplice.",
+      visual: `Titolo grande, contrasto forte, elemento visivo collegato a ${d.niche} ma senza testo troppo descrittivo.`
     },
     {
       slide: 2,
       role: "problema",
-      title: `Il blocco reale`,
-      text: `Il problema non è solo mancanza di idee: è non sapere come trasformare ${d.problem} in un messaggio chiaro su ${d.platform}.`,
-      visual: `Mostra confusione, bozze incomplete o una situazione quotidiana del pubblico.`
+      title: "Il blocco reale",
+      text: `${capitalize(s.painPoint)}. Quando succede, anche una buona intenzione diventa difficile da mantenere.`,
+      visual: "Mostra confusione, scelte aperte o una situazione quotidiana del pubblico."
     },
     {
       slide: 3,
       role: "errore comune",
-      title: `L'errore da evitare`,
-      text: `Parlare subito di ${d.offer} senza prima far riconoscere a ${d.audience} il proprio problema.`,
-      visual: `Due colonne: "troppo generico" contro "specifico per il pubblico".`
+      title: "L'errore che rallenta",
+      text: `${capitalize(s.commonMistakeLower)}. Così il percorso sembra più pesante di quello che dovrebbe essere.`,
+      visual: "Due colonne: 'improvviso tutto' contro 'seguo un passaggio alla volta'."
     },
     {
       slide: 4,
       role: "nuova prospettiva",
-      title: `Cambia punto di partenza`,
-      text: `Parti da ciò che il pubblico vuole ottenere: ${d.result}. Poi mostra perché ${d.problem} lo sta rallentando.`,
-      visual: `Freccia dal problema al risultato, con una tappa centrale chiamata metodo.`
+      title: "Cambia punto di partenza",
+      text: "Non partire dalla soluzione perfetta. Parti da ciò che rende il primo passo più leggero, chiaro e ripetibile.",
+      visual: "Freccia da 'confusione' a 'continuità', con una tappa centrale chiamata metodo."
     },
     {
       slide: 5,
       role: "soluzione pratica",
-      title: `La soluzione semplice`,
-      text: `Usa ${d.offer} come ponte: problema chiaro, spiegazione breve, beneficio concreto e CTA coerente con "${d.goal}".`,
-      visual: `Mini schema in quattro step, leggibile anche da smartphone.`
+      title: "La soluzione semplice",
+      text: `${d.offer} diventa utile quando riduce attrito: meno decisioni inutili, più guida, un passo concreto da applicare subito.`,
+      visual: "Mini schema in quattro step, leggibile anche da smartphone."
     },
     {
       slide: 6,
       role: "beneficio finale",
-      title: `Cosa cambia davvero`,
-      text: `${capitalize(d.audience)} capisce meglio il valore, si sente compreso e vede una strada più concreta verso ${d.result}.`,
-      visual: `Prima/dopo visivo: caos iniziale e contenuto finale ordinato.`
+      title: "Cosa cambia davvero",
+      text: `${capitalize(s.emotionalBenefit)}. Questo rende il risultato più vicino e meno dipendente dall'entusiasmo del momento.`,
+      visual: "Prima/dopo visivo: caos iniziale e percorso finale ordinato."
     },
     {
       slide: 7,
       role: "CTA",
-      title: `Vuoi applicarlo al tuo caso?`,
-      text: `Salva il carosello o scrivimi "${keyword(d)}" per capire come adattare ${d.offer} alla tua comunicazione su ${d.platform}.`,
-      visual: `CTA grande, spazio bianco, freccia o pulsante grafico ben visibile.`
+      title: "Vuoi applicarlo al tuo caso?",
+      text: `Salva il carosello o scrivimi "${keyword(d)}" per trasformare questa idea in un contenuto adatto a ${d.platform}.`,
+      visual: "CTA grande, spazio bianco, freccia o pulsante grafico ben visibile."
     }
   ];
 }
 
 function buildIdeas(d: ReturnType<typeof normalizeForm>) {
+  const s = d.strategy;
+
   return [
-    `Mini caso pratico: mostra come ${d.audience} passa da "${d.problem}" a un primo passo verso ${d.result} usando ${d.offer}.`,
-    `Post confronto: "contenuto generico" contro "contenuto specifico per ${d.niche}" con esempio pensato per ${d.platform}.`,
-    `Storia personale o cliente tipo: racconta il momento in cui ${d.problem} diventa evidente e come cambia la percezione grazie a ${d.offer}.`,
-    `Checklist rapida: 5 domande da farsi prima di pubblicare un ${d.contentType} con obiettivo "${d.goal}".`,
-    `Contenuto obiezioni: rispondi ai dubbi di ${d.audience} prima che valuti ${d.offer}, mantenendo un tono ${d.tone}.`
+    `Mini caso pratico: racconta il passaggio da tentativi disordinati a una prima azione guidata, collegando solo alla fine ${d.offer}.`,
+    `Post confronto: metodo improvvisato contro metodo guidato, con esempi concreti adatti a ${d.platform}.`,
+    "Storia cliente tipo: mostra il momento in cui la persona capisce che il problema non è impegnarsi di più, ma scegliere un percorso più sostenibile.",
+    `Checklist rapida: 5 segnali che indicano che stai complicando troppo il percorso verso ${s.desire}.`,
+    `Contenuto obiezioni: rispondi al dubbio "e se non facesse per me?" con tono ${d.tone}, usando prove logiche e passaggi semplici.`
   ];
 }
 
 function buildAngles(d: ReturnType<typeof normalizeForm>) {
+  const s = d.strategy;
+
   return [
     {
-      title: "Angolo problema-soluzione",
-      description: `Metti al centro "${d.problem}" e presenta ${d.offer} come strumento pratico per rendere più semplice il percorso verso ${d.result}. Ideale quando l'obiettivo è ${d.goal}.`
+      title: "Errore che blocca il risultato",
+      description: `Mostra come ${s.commonMistakeLower} renda il percorso più faticoso. Poi presenta una scelta più semplice, concreta e collegata a ${d.offer}.`
     },
     {
-      title: "Angolo trasformazione",
-      description: `Mostra il prima/dopo di ${d.audience}: prima confusione, frizione o blocco; dopo più chiarezza, metodo e vicinanza al risultato "${d.result}".`
+      title: "Mito da sfatare",
+      description: `Parti dalla falsa credenza "${s.falseBeliefLower}" e ribaltala: il pubblico non ha bisogno di pressione extra, ma di un modo più chiaro per iniziare e continuare.`
     },
     {
-      title: "Angolo educativo autorevole",
-      description: `Spiega un errore tipico in ${d.niche}, dai una regola semplice e collega la regola a ${d.offer}. Funziona bene su ${d.platform} con tono ${d.tone}.`
+      title: "Risultato visto dal lato emotivo",
+      description: `Non parlare solo del traguardo pratico. Racconta ${s.emotionalBenefitLower}: è spesso questo che rende il contenuto più memorabile e più umano.`
     }
   ];
 }
 
 function buildMistakes(d: ReturnType<typeof normalizeForm>) {
+  const s = d.strategy;
+
   return [
-    `Parlare di ${d.offer} come se fosse adatto a chiunque: rendilo specifico per ${d.audience} e per il problema "${d.problem}".`,
-    `Promettere ${d.result} come risultato garantito: meglio mostrare passaggi concreti, esempi realistici e benefici credibili.`,
-    `Usare su ${d.platform} frasi vaghe tipo "migliora la tua presenza online": sostituiscile con situazioni reali della nicchia ${d.niche}.`
+    `Ripetere alla lettera il problema dichiarato: suona meccanico. Meglio trasformarlo in una situazione concreta, come ${s.painPointLower}.`,
+    `Promettere un risultato garantito: meglio usare una promessa realistica, cioè ${s.realisticPromiseLower}.`,
+    `Presentare ${d.offer} troppo presto: prima crea identificazione, poi mostra il cambio di prospettiva, infine proponi il passo successivo.`
   ];
 }
 
@@ -648,6 +680,113 @@ function seedFrom(d: ReturnType<typeof normalizeForm>) {
   return `${d.niche}${d.offer}${d.audience}${d.problem}${d.result}${d.platform}${d.tone}${d.goal}`
     .split("")
     .reduce((total, char) => total + char.charCodeAt(0), 0);
+}
+
+function createStrategicContext(input: StrategicInput) {
+  const audienceView = makeAudienceView(input.audience);
+  const desire = reframeDesire(input.result);
+  const painPoint = reframePainPoint(input.problem, input.niche, audienceView);
+  const falseBelief = buildFalseBelief(input.niche, input.result);
+  const commonMistake = buildCommonMistake(input.problem, input.offer);
+  const emotionalBenefit = buildEmotionalBenefit(input.result);
+  const realisticPromise = buildRealisticPromise(input.offer, desire);
+  const narrativeAngle = buildNarrativeAngle(audienceView, painPoint, desire);
+
+  return {
+    audienceView,
+    painPoint,
+    painPointLower: lowerFirst(painPoint),
+    desire,
+    falseBelief,
+    falseBeliefLower: lowerFirst(falseBelief),
+    commonMistake,
+    commonMistakeLower: lowerFirst(commonMistake),
+    emotionalBenefit,
+    emotionalBenefitLower: lowerFirst(emotionalBenefit),
+    realisticPromise,
+    realisticPromiseLower: lowerFirst(realisticPromise),
+    narrativeAngle
+  };
+}
+
+function makeAudienceView(audience: string) {
+  if (isShortInput(audience)) {
+    return "chi sente il bisogno di cambiare ma non ha ancora una strada chiara";
+  }
+
+  return `chi si riconosce in questa situazione: ${softenSentence(audience)}`;
+}
+
+function reframePainPoint(problem: string, niche: string, audienceView: string) {
+  if (isShortInput(problem)) {
+    return `il blocco nasce quando ${audienceView} prova ad affrontare ${niche} con troppe informazioni, poca guida e aspettative difficili da mantenere`;
+  }
+
+  return `il problema non è solo "${softenSentence(problem)}", ma il modo in cui quella difficoltà crea rinvii, dubbi e perdita di continuità`;
+}
+
+function reframeDesire(result: string) {
+  if (isShortInput(result)) {
+    return "sentire che il percorso è più leggero, concreto e finalmente gestibile";
+  }
+
+  return `arrivare a ${softenSentence(result)} con meno confusione e più fiducia nel processo`;
+}
+
+function buildFalseBelief(niche: string, result: string) {
+  const desired = isShortInput(result) ? "vedere un cambiamento reale" : softenSentence(result);
+  return `rivoluzionare tutto, fare scelte estreme o aspettare il momento perfetto per ${desired}`;
+}
+
+function buildCommonMistake(problem: string, offer: string) {
+  if (isShortInput(problem)) {
+    return `cercare subito la soluzione più completa invece di costruire un primo passo semplice attorno a ${offer}`;
+  }
+
+  return `trattare il blocco come un difetto personale invece di semplificare il percorso con una guida più chiara`;
+}
+
+function buildEmotionalBenefit(result: string) {
+  if (isShortInput(result)) {
+    return "sentirsi più lucidi, meno sopraffatti e più capaci di continuare anche quando l'entusiasmo cala";
+  }
+
+  return `sentire che ${softenSentence(result)} non dipende da uno slancio momentaneo, ma da una struttura che puoi seguire`;
+}
+
+function buildRealisticPromise(offer: string, desire: string) {
+  return `${offer} non promette magie: aiuta a rendere più chiaro il prossimo passo verso ${desire}`;
+}
+
+function buildNarrativeAngle(audienceView: string, painPoint: string, desire: string) {
+  return `raccontare il passaggio da "${painPoint}" a una situazione in cui ${audienceView} riesce a ${desire}`;
+}
+
+function adaptHookForPlatform(hook: string, d: ReturnType<typeof normalizeForm>) {
+  const endings: Record<Platform, string> = {
+    Instagram: "Perfetto da salvare prima di creare il prossimo post.",
+    TikTok: "Detto in pochi secondi, questo cambia subito la prospettiva.",
+    Facebook: "È il tipo di riflessione che apre una conversazione reale.",
+    "YouTube Shorts": "Funziona bene come apertura rapida prima dell'esempio pratico.",
+    LinkedIn: "È un punto di vista utile per chi vuole comunicare con più metodo."
+  };
+
+  return `${hook} ${endings[d.platform]}`;
+}
+
+function isShortInput(value: string) {
+  return clean(value).split(" ").filter(Boolean).length <= 2;
+}
+
+function softenSentence(value: string) {
+  return clean(value)
+    .replace(/^(non riesco a|non riescono a|voglio|vuole|vorrei|ottenere|raggiungere)\s+/i, "")
+    .replace(/[.!?]+$/g, "");
+}
+
+function lowerFirst(value: string) {
+  if (!value) return value;
+  return value.charAt(0).toLowerCase() + value.slice(1);
 }
 
 function keyword(d: ReturnType<typeof normalizeForm>) {
