@@ -10,6 +10,7 @@ type Platform = "Instagram" | "TikTok" | "Facebook" | "YouTube Shorts" | "Linked
 type Goal = "vendere" | "ottenere contatti" | "aumentare engagement" | "educare" | "creare fiducia";
 type Tone = "diretto" | "educativo" | "persuasivo" | "amichevole" | "professionale" | "motivazionale";
 type ContentType = "reel" | "carosello" | "post" | "storia" | "video breve";
+type NicheCategory = "wellness" | "beauty" | "localFood" | "realEstate" | "knowledge" | "neutral";
 
 type GeneratorForm = {
   niche: string;
@@ -39,10 +40,16 @@ type GeneratedContent = {
 
 type StrategicInput = {
   niche: string;
+  naturalNiche: string;
   offer: string;
+  naturalOffer: string;
   audience: string;
+  naturalAudience: string;
   problem: string;
+  naturalProblem: string;
   result: string;
+  naturalResult: string;
+  category: NicheCategory;
   platform: Platform;
   goal: Goal;
   tone: Tone;
@@ -375,29 +382,37 @@ function setFormField<Key extends keyof GeneratorForm>(
 
 function generateLocalContent(form: GeneratorForm): GeneratedContent {
   const data = normalizeForm(form);
-  const hooks = buildHooks(data);
-  const captions = buildCaptions(data);
-  const ctas = buildCtas(data);
-
-  return {
-    hooks,
-    captions,
-    ctas,
+  const content = {
+    hooks: buildHooks(data),
+    captions: buildCaptions(data),
+    ctas: buildCtas(data),
     reel: buildReel(data),
     carousel: buildCarousel(data),
     ideas: buildIdeas(data),
     angles: buildAngles(data),
     mistakes: buildMistakes(data)
   };
+
+  return applyQualityControl(content, data);
 }
 
 function normalizeForm(form: GeneratorForm) {
+  const raw = {
+    niche: cleanInput(form.niche),
+    offer: cleanInput(form.offer),
+    audience: cleanInput(form.audience),
+    problem: cleanInput(form.problem),
+    result: cleanInput(form.desiredResult)
+  };
+  const category = detectNicheCategory(raw.niche, raw.offer, raw.problem, raw.result);
   const base: StrategicInput = {
-    niche: clean(form.niche),
-    offer: clean(form.offer),
-    audience: clean(form.audience),
-    problem: clean(form.problem),
-    result: clean(form.desiredResult),
+    ...raw,
+    naturalNiche: makeNaturalNiche(raw.niche, category),
+    naturalOffer: makeNaturalOffer(raw.offer, category),
+    naturalAudience: makeNaturalAudience(raw.audience),
+    naturalProblem: makeNaturalProblem(raw.problem, category),
+    naturalResult: makeNaturalResult(raw.result, category),
+    category,
     platform: form.platform,
     goal: form.goal,
     tone: form.tone,
@@ -414,76 +429,92 @@ function normalizeForm(form: GeneratorForm) {
 function buildHooks(d: ReturnType<typeof normalizeForm>) {
   const s = d.strategy;
 
-  return [
-    `Il vero motivo per cui ${s.audienceView} resta bloccato raramente è quello che sembra all'inizio.`,
-    `Prima di cercare un cambiamento più grande, guarda l'errore che sta rendendo tutto più complicato del necessario.`,
-    `Se ogni tentativo parte bene e poi si inceppa, forse non serve più motivazione: serve un percorso più facile da mantenere.`,
-    `La maggior parte delle persone prova ad accelerare, ma ignora il punto in cui perde chiarezza e continuità.`,
-    `Non devi per forza ${s.falseBeliefLower} per iniziare a vedere un progresso più stabile.`,
-    `Il passaggio più sottovalutato è questo: rendere semplice il primo passo prima di chiedere costanza.`,
-    `Cosa succede quando smetti di inseguire la soluzione perfetta e inizi da una scelta più sostenibile?`,
-    `All'inizio sembra solo mancanza di tempo. Poi scopri che il problema è decidere cosa fare quando arrivano dubbi e distrazioni.`,
-    `${s.realisticPromise}. È una promessa meno rumorosa, ma molto più credibile.`,
-    `Tra improvvisare e seguire una direzione chiara c'è una differenza enorme: la seconda riduce il peso mentale.`
-  ].map((hook) => adaptHookForPlatform(hook, d));
+  const hooks = [
+    `Il problema non è sempre quello che stai cercando di risolvere.`,
+    `${s.dailyScene}`,
+    `Prima di cambiare tutto, guarda dove stai perdendo continuità.`,
+    `La maggior parte delle persone prova ad accelerare, ma salta il passaggio più semplice.`,
+    `Non devi complicare tutto per vedere un primo cambiamento concreto.`,
+    `Se ti blocchi sempre nello stesso punto, forse non ti manca motivazione.`,
+    `Il tuo pubblico non cerca solo una soluzione. Cerca chiarezza.`,
+    `La vera differenza la fa il metodo, non l'entusiasmo del primo giorno.`,
+    `Prima di scegliere, le persone devono capire perché dovrebbero fidarsi.`,
+    `${s.contrastHook}`
+  ];
+
+  return hooks.map((hook) => adaptHookForPlatform(polishSentence(hook), d));
 }
 
 function buildCaptions(d: ReturnType<typeof normalizeForm>) {
   const s = d.strategy;
-  const bases = [
+  const captions = [
     {
-      title: "Educativa: il blocco non è dove sembra",
-      angle: `Il punto non è spingere le persone a fare di più. Spesso il blocco nasce prima: quando ${s.audienceView} non capisce quale scelta sia davvero adatta, semplice e sostenibile.`
+      title: "Storytelling breve",
+      text: `${s.storyOpening}
+
+All'inizio sembra un dettaglio piccolo. Poi diventa il motivo per cui si rimanda, si cambia idea o si riparte sempre da capo. Non succede perché le persone non tengono davvero al risultato: spesso succede perché il percorso sembra troppo pieno di passaggi, dubbi e decisioni da prendere.
+
+La svolta arriva quando smetti di cercare la soluzione perfetta e inizi da una cosa più semplice: capire qual è il primo passo sostenibile. ${d.naturalOffer} ha senso proprio qui, perché aiuta a dare ordine, direzione e meno peso mentale.
+
+Il beneficio non è solo pratico. È sentirsi più lucidi, più guidati e meno soli davanti alla scelta successiva.
+
+${captionCta(d, 0)}`
     },
     {
-      title: "Emotiva: quando riparti sempre da capo",
-      angle: `C'è una frustrazione che pesa più del problema in sé: la sensazione di averci già provato, di aver perso continuità e di non sapere se questa volta sarà diverso.`
+      title: "Problema / soluzione",
+      text: `Il blocco più grande non è sempre la mancanza di voglia. Spesso è il fatto che ogni tentativo richiede troppa energia, troppe scelte e troppa improvvisazione.
+
+Quando una persona vive ${d.naturalProblem}, tende a cercare una risposta veloce. Ma una risposta veloce, se non è semplice da mantenere, dopo poco diventa un'altra cosa iniziata e lasciata lì.
+
+La soluzione più utile è ridurre l'attrito: meno confusione, passaggi più chiari, un obiettivo realistico alla volta. In questo modo ${d.naturalOffer} non viene percepito come l'ennesima promessa, ma come un supporto concreto per avvicinarsi a ${d.naturalResult}.
+
+Il punto non è fare tutto subito. È iniziare meglio.
+
+${captionCta(d, 1)}`
     },
     {
-      title: "Vendita: rendere la scelta più semplice",
-      angle: `Una buona offerta non deve sembrare una scorciatoia miracolosa. Deve far capire perché il prossimo passo è più chiaro, più guidato e meno pesante da affrontare.`
+      title: "Educativa",
+      text: `C'è una falsa credenza molto comune: pensare che per cambiare serva rivoluzionare tutto.
+
+In realtà, nella maggior parte dei casi, le persone non hanno bisogno di aggiungere pressione. Hanno bisogno di capire cosa togliere, cosa semplificare e quale scelta fare per prima. È qui che un contenuto diventa davvero utile: non ripete il problema, lo rende più chiaro.
+
+Se il messaggio mostra un errore concreto, una nuova prospettiva e un passo semplice, diventa molto più credibile. ${d.naturalOffer} può essere presentato come una guida pratica, non come una bacchetta magica.
+
+La promessa più forte è anche la più realistica: rendere il percorso meno confuso e più facile da seguire.
+
+${captionCta(d, 2)}`
     },
     {
-      title: "Storytelling: il momento in cui tutto si ferma",
-      angle: `Succede spesso così: all'inizio c'è entusiasmo, poi arrivano troppe opzioni, piccoli imprevisti e la sensazione di non sapere più qual è la strada giusta.`
+      title: "Vendita soft",
+      text: `Prima di acquistare, prenotare o chiedere informazioni, una persona deve sentirsi capita.
+
+Non basta dire che un servizio è utile. Bisogna far vedere perché può essere utile proprio nel momento in cui la persona si sente bloccata, confusa o stanca di tentativi poco chiari.
+
+Per questo ${d.naturalOffer} va raccontato partendo dall'esperienza reale, non dalla lista di caratteristiche. Mostra il prima: troppe opzioni, poca direzione, risultati che sembrano lontani. Poi mostra il dopo: un percorso più ordinato, una decisione più semplice, un passo concreto da fare.
+
+Vendere in modo naturale significa far pensare: "ok, questa cosa potrebbe aiutarmi davvero".
+
+${captionCta(d, 3)}`
     },
     {
-      title: "Engagement: qual è il tuo ostacolo vero?",
-      angle: `La domanda più utile non è "cosa vuoi ottenere?", ma "cosa ti fa fermare proprio quando dovresti continuare?". Le risposte spesso sono molto più concrete di quanto sembrino.`
-    },
-    {
-      title: `Il ponte tra bisogno e decisione`,
-      angle: `Nel settore ${d.niche}, il pubblico non decide solo perché vede un'offerta. Decide quando sente che qualcuno ha capito cosa lo blocca davvero e gli propone un passo meno confuso.`
-    },
-    {
-      title: `La caption che parte dalla vita reale`,
-      angle: `Un buon contenuto per ${d.platform} deve sembrare scritto per una situazione precisa, non per una categoria astratta. Deve far dire: "ok, questa cosa parla proprio del punto in cui mi blocco".`
-    },
-    {
-      title: `Il modo più semplice per spiegare ${d.offer}`,
-      angle: `Se provi a spiegare tutto, rischi di confondere. Se invece parti da una sola tensione concreta, puoi mostrare in modo ${d.tone} perché ${d.offer} riduce attrito e rende il percorso più praticabile.`
-    },
-    {
-      title: `Una vendita più naturale`,
-      angle: `Vendere su ${d.platform} non significa spingere. Significa far vedere che il problema è stato letto bene, che l'ostacolo non viene banalizzato e che la proposta ha un ruolo chiaro.`
-    },
-    {
-      title: `Da contenuto qualsiasi a contenuto utile`,
-      angle: `La differenza tra un contenuto ignorato e uno salvato sta nella prospettiva. Non basta parlare di ${d.niche}: devi trasformare una situazione comune in una lettura più lucida.`
+      title: "Diretta e persuasiva",
+      text: `Se una persona continua a rimandare, non serve farla sentire in colpa.
+
+Serve darle una strada più semplice da seguire.
+
+Il problema, spesso, è che il percorso viene percepito come troppo grande: troppe cose da capire, troppe decisioni, troppi contenuti o soluzioni che promettono tanto ma non aiutano a partire davvero.
+
+Qui la comunicazione deve essere chiara: non promettere miracoli, mostra un passo concreto. ${d.naturalOffer} diventa più interessante quando viene raccontato come un modo per togliere confusione e trasformare un desiderio generico in un'azione più precisa.
+
+Se vuoi che le persone si fidino, non parlare solo del risultato finale. Fai vedere perché il prossimo passo è più semplice di quanto pensano.
+
+${captionCta(d, 4)}`
     }
   ];
 
-  return rotate(bases, seedFrom(d)).slice(0, 5).map((base, index) => ({
-    title: base.title,
-    text: `${base.angle}
-
-Il primo passo è rendere il contenuto meno ovvio. Invece di ripetere il bisogno dichiarato, entra nel momento in cui nasce il blocco: ${s.painPoint}. Questo rende il testo più umano, perché non descrive solo un obiettivo, ma la fatica concreta che le persone incontrano prima di arrivarci.
-
-Con un tono ${d.tone}, puoi educare senza appesantire: spiega che ${s.falseBeliefLower} non è l'unica strada. Il cambio di prospettiva è più forte quando mostri un'alternativa semplice: ${s.commonMistakeLower}, poi costruire un primo passo guidato, realistico e facile da ripetere. Questo rende il contenuto più credibile su ${d.platform}, soprattutto se l'obiettivo è ${d.goal}.
-
-Qui entra in modo naturale ${d.offer}: non come soluzione magica, ma come struttura che aiuta a passare da confusione a chiarezza. Il beneficio non è solo pratico; è anche emotivo: ${s.emotionalBenefit}. Ed è proprio questa promessa realistica, ${s.realisticPromiseLower}, che rende la comunicazione più adulta e meno da template.
-
-CTA: ${captionCta(d, index)}`
+  return rotate(captions, seedFrom(d)).map((caption) => ({
+    title: caption.title,
+    text: polishSentence(caption.text)
   }));
 }
 
@@ -493,10 +524,10 @@ function buildCtas(d: ReturnType<typeof normalizeForm>) {
     `Scrivimi "${keyword(d)}" se vuoi trasformare questa situazione in un percorso più chiaro e sostenibile.`,
     `Salva questo contenuto se ti serve una traccia meno generica per parlare a chi è fermo tra dubbi, tentativi e troppe opzioni.`,
     `Commenta con l'ostacolo che vedi più spesso: ti rispondo con un'idea di contenuto da usare su ${d.platform}.`,
-    `Se vuoi comunicare ${d.offer} senza sembrare uguale a tutti, parti da questo cambio di prospettiva.`,
+    `Se vuoi comunicare la tua proposta senza sembrare uguale a tutti, parti da questo cambio di prospettiva.`,
     `Condividilo con chi continua a provare soluzioni diverse ma non ha ancora trovato una direzione semplice da seguire.`,
     `Vuoi rendere più credibile la tua proposta? Parti da ${s.commonMistakeLower} e mostra un'alternativa concreta.`,
-    `Mandami un messaggio se vuoi trasformare ${d.offer} in un contenuto più ${d.tone}, utile e meno promozionale.`,
+    `Mandami un messaggio se vuoi trasformare la tua proposta in un contenuto più ${d.tone}, utile e meno promozionale.`,
     `Salva questa traccia: ti aiuta a parlare del desiderio finale senza ripetere sempre le stesse parole.`,
     `Usala per il tuo prossimo ${d.contentType}: prima mostra il blocco, poi la nuova prospettiva, poi la CTA.`,
     `Se questa lettura ti sembra familiare, il prossimo passo è rendere il messaggio più specifico per ${s.audienceView}.`
@@ -523,7 +554,7 @@ function buildReel(d: ReturnType<typeof normalizeForm>) {
         scene: "Conseguenza concreta",
         screenText: "Troppi tentativi, poca direzione",
         voiceover: `Quando ${s.audienceView} prova a risolvere tutto insieme, il rischio è fermarsi prima di vedere un progresso stabile.`,
-        visual: `Mostra una checklist incompleta, un calendario vuoto o un prima/dopo concettuale legato a ${d.niche}.`
+        visual: `Mostra una checklist incompleta, un calendario vuoto o un prima/dopo concettuale legato a ${d.naturalNiche}.`
       },
       {
         time: "5-8 secondi",
@@ -536,7 +567,7 @@ function buildReel(d: ReturnType<typeof normalizeForm>) {
         time: "Finale",
         scene: "CTA coerente con l'obiettivo",
         screenText: `${capitalize(s.desire)} senza complicarti tutto`,
-        voiceover: `${d.offer} serve proprio a questo: dare una struttura più semplice per avvicinarsi al risultato senza inseguire soluzioni casuali.`,
+        voiceover: `${capitalize(d.naturalOffer)}: dare una struttura più semplice per avvicinarsi al risultato senza inseguire soluzioni casuali.`,
         visual: `Schermata finale pulita con CTA grande, promessa realistica e riferimento visivo a ${d.platform}.`
       }
     ]
@@ -552,7 +583,7 @@ function buildCarousel(d: ReturnType<typeof normalizeForm>) {
       role: "titolo forte",
       title: "Il blocco non è dove pensi",
       text: "Una guida rapida per trasformare confusione e tentativi casuali in un percorso più semplice.",
-      visual: `Titolo grande, contrasto forte, elemento visivo collegato a ${d.niche} ma senza testo troppo descrittivo.`
+      visual: `Titolo grande, contrasto forte, elemento visivo collegato a ${d.naturalNiche} ma senza testo troppo descrittivo.`
     },
     {
       slide: 2,
@@ -579,7 +610,7 @@ function buildCarousel(d: ReturnType<typeof normalizeForm>) {
       slide: 5,
       role: "soluzione pratica",
       title: "La soluzione semplice",
-      text: `${d.offer} diventa utile quando riduce attrito: meno decisioni inutili, più guida, un passo concreto da applicare subito.`,
+      text: `${capitalize(d.naturalOffer)} diventa utile quando riduce attrito: meno decisioni inutili, più guida, un passo concreto da applicare subito.`,
       visual: "Mini schema in quattro step, leggibile anche da smartphone."
     },
     {
@@ -603,11 +634,11 @@ function buildIdeas(d: ReturnType<typeof normalizeForm>) {
   const s = d.strategy;
 
   return [
-    `Mini caso pratico: racconta il passaggio da tentativi disordinati a una prima azione guidata, collegando solo alla fine ${d.offer}.`,
+    `Mini caso pratico: racconta il passaggio da tentativi disordinati a una prima azione guidata, collegando solo alla fine la tua proposta.`,
     `Post confronto: metodo improvvisato contro metodo guidato, con esempi concreti adatti a ${d.platform}.`,
     "Storia cliente tipo: mostra il momento in cui la persona capisce che il problema non è impegnarsi di più, ma scegliere un percorso più sostenibile.",
     `Checklist rapida: 5 segnali che indicano che stai complicando troppo il percorso verso ${s.desire}.`,
-    `Contenuto obiezioni: rispondi al dubbio "e se non facesse per me?" con tono ${d.tone}, usando prove logiche e passaggi semplici.`
+    `Contenuto obiezioni: rispondi al dubbio "e se non facesse per me?" con prove logiche, passaggi semplici e un linguaggio coerente con il tuo stile.`
   ];
 }
 
@@ -617,7 +648,7 @@ function buildAngles(d: ReturnType<typeof normalizeForm>) {
   return [
     {
       title: "Errore che blocca il risultato",
-      description: `Mostra come ${s.commonMistakeLower} renda il percorso più faticoso. Poi presenta una scelta più semplice, concreta e collegata a ${d.offer}.`
+      description: `Mostra come ${s.commonMistakeLower} renda il percorso più faticoso. Poi presenta una scelta più semplice, concreta e collegata alla tua proposta.`
     },
     {
       title: "Mito da sfatare",
@@ -636,8 +667,40 @@ function buildMistakes(d: ReturnType<typeof normalizeForm>) {
   return [
     `Ripetere alla lettera il problema dichiarato: suona meccanico. Meglio trasformarlo in una situazione concreta, come ${s.painPointLower}.`,
     `Promettere un risultato garantito: meglio usare una promessa realistica, cioè ${s.realisticPromiseLower}.`,
-    `Presentare ${d.offer} troppo presto: prima crea identificazione, poi mostra il cambio di prospettiva, infine proponi il passo successivo.`
+    `Presentare l'offerta troppo presto: prima crea identificazione, poi mostra il cambio di prospettiva, infine proponi il passo successivo.`
   ];
+}
+
+function applyQualityControl(content: GeneratedContent, d: ReturnType<typeof normalizeForm>): GeneratedContent {
+  return {
+    hooks: content.hooks.map((text, index) => avoidMechanicalPhrasing(text, d, index)),
+    captions: content.captions.map((caption, index) => ({
+      title: avoidMechanicalPhrasing(caption.title, d, index),
+      text: avoidMechanicalPhrasing(caption.text, d, index)
+    })),
+    ctas: content.ctas.map((text, index) => avoidMechanicalPhrasing(text, d, index)),
+    reel: {
+      ...content.reel,
+      scenes: content.reel.scenes.map((scene, index) => ({
+        ...scene,
+        screenText: avoidMechanicalPhrasing(scene.screenText, d, index),
+        voiceover: avoidMechanicalPhrasing(scene.voiceover, d, index),
+        visual: avoidMechanicalPhrasing(scene.visual, d, index)
+      }))
+    },
+    carousel: content.carousel.map((slide, index) => ({
+      ...slide,
+      title: avoidMechanicalPhrasing(slide.title, d, index),
+      text: avoidMechanicalPhrasing(slide.text, d, index),
+      visual: avoidMechanicalPhrasing(slide.visual, d, index)
+    })),
+    ideas: content.ideas.map((text, index) => avoidMechanicalPhrasing(text, d, index)),
+    angles: content.angles.map((angle, index) => ({
+      title: avoidMechanicalPhrasing(angle.title, d, index),
+      description: avoidMechanicalPhrasing(angle.description, d, index)
+    })),
+    mistakes: content.mistakes.map((text, index) => avoidMechanicalPhrasing(text, d, index))
+  };
 }
 
 function buildCopyText(content: GeneratedContent) {
@@ -656,16 +719,16 @@ function buildCopyText(content: GeneratedContent) {
 
 function captionCta(d: ReturnType<typeof normalizeForm>, index: number) {
   const ctas = [
-    `Scrivimi "${keyword(d)}" e ti aiuto a capire come adattare ${d.offer} al tuo caso.`,
-    `Salva questo post e usalo come traccia per il prossimo contenuto su ${d.platform}.`,
-    `Commenta con "${keyword(d)}" se vuoi un esempio pensato per ${d.niche}.`,
-    `Se vuoi ${d.result}, parti da un messaggio più specifico: questo è il primo passo.`,
-    `Condividilo con un collega che continua a bloccarsi su "${d.problem}".`,
-    `Mandami il tuo caso e ti aiuto a trasformarlo in un contenuto più chiaro.`,
+    `Scrivimi "${keyword(d)}" se vuoi capire qual è il primo passo più semplice da fare.`,
+    `Salva questo post: può tornarti utile quando senti di complicare troppo il percorso.`,
+    `Commenta con l'ostacolo che ti blocca più spesso: potrei trasformarlo in un esempio pratico.`,
+    `Se vuoi più chiarezza, inizia da una scelta piccola ma fatta bene.`,
+    `Condividilo con una persona che continua a ripartire da capo.`,
+    `Mandami il tuo caso e ti aiuto a renderlo più chiaro e comunicabile.`,
     `Prova questa struttura nel tuo prossimo ${d.contentType} e osserva quali risposte ricevi.`,
-    `Scrivi quale parte ti blocca di più: problema, promessa o CTA finale.`,
-    `Salva la caption se vuoi costruire contenuti più coerenti con ${d.goal}.`,
-    `Usa questa traccia per spiegare ${d.offer} senza sembrare generico.`
+    `Scrivi quale parte ti pesa di più: iniziare, scegliere o restare costante.`,
+    `Salva la caption se vuoi costruire contenuti più utili e meno improvvisati.`,
+    `Usa questa traccia per raccontare la tua proposta senza sembrare generico.`
   ];
 
   return ctas[index % ctas.length];
@@ -683,14 +746,16 @@ function seedFrom(d: ReturnType<typeof normalizeForm>) {
 }
 
 function createStrategicContext(input: StrategicInput) {
-  const audienceView = makeAudienceView(input.audience);
-  const desire = reframeDesire(input.result);
-  const painPoint = reframePainPoint(input.problem, input.niche, audienceView);
-  const falseBelief = buildFalseBelief(input.niche, input.result);
-  const commonMistake = buildCommonMistake(input.problem, input.offer);
-  const emotionalBenefit = buildEmotionalBenefit(input.result);
-  const realisticPromise = buildRealisticPromise(input.offer, desire);
+  const audienceView = input.naturalAudience;
+  const desire = input.naturalResult;
+  const painPoint = input.naturalProblem;
+  const falseBelief = buildFalseBelief(input.category, input.result);
+  const commonMistake = buildCommonMistake(input.category, input.naturalOffer);
+  const emotionalBenefit = buildEmotionalBenefit(input.category, desire);
+  const realisticPromise = buildRealisticPromise(input.naturalOffer, desire);
   const narrativeAngle = buildNarrativeAngle(audienceView, painPoint, desire);
+  const dailyScene = buildDailyScene(input.category, input.platform);
+  const contrastHook = buildContrastHook(input.category);
 
   return {
     audienceView,
@@ -705,53 +770,138 @@ function createStrategicContext(input: StrategicInput) {
     emotionalBenefitLower: lowerFirst(emotionalBenefit),
     realisticPromise,
     realisticPromiseLower: lowerFirst(realisticPromise),
-    narrativeAngle
+    narrativeAngle,
+    dailyScene,
+    contrastHook
   };
 }
 
-function makeAudienceView(audience: string) {
+function detectNicheCategory(...values: string[]): NicheCategory {
+  const text = values.join(" ").toLowerCase();
+  const groups: Record<NicheCategory, string[]> = {
+    wellness: ["dimagr", "dieta", "peso", "forma fisica", "nutriz", "benessere", "palestra", "fitness"],
+    beauty: ["estet", "viso", "pelle", "bellezza", "capelli", "unghie", "parrucch", "makeup", "barbiere"],
+    localFood: ["ristor", "bar", "pizzeria", "locale", "cibo", "chef", "trattoria", "aperitivo"],
+    realEstate: ["immob", "casa", "affitto", "vendita", "appartamento", "villa", "agenzia"],
+    knowledge: ["corso", "digitale", "online", "consul", "coaching", "formazione", "mentor", "business"],
+    neutral: []
+  };
+
+  return (Object.keys(groups) as NicheCategory[]).find((category) =>
+    groups[category].some((word) => text.includes(word))
+  ) || "neutral";
+}
+
+function makeNaturalNiche(niche: string, category: NicheCategory) {
+  const variants: Record<NicheCategory, string[]> = {
+    wellness: ["benessere e forma fisica", "abitudini più sostenibili", "percorso di cambiamento personale"],
+    beauty: ["cura personale", "immagine e routine di bellezza", "risultati visibili e curati"],
+    localFood: ["esperienza nel locale", "ospitalità e gusto", "momenti da vivere e condividere"],
+    realEstate: ["valorizzazione dell'immobile", "scelta della casa giusta", "presentazione chiara dell'offerta"],
+    knowledge: ["competenze trasformate in valore", "fiducia prima della vendita", "percorso guidato di apprendimento"],
+    neutral: ["valore comunicato meglio", "problema reale trasformato in contenuto utile", "offerta più chiara e comprensibile"]
+  };
+
+  return chooseVariant(variants[category], niche);
+}
+
+function makeNaturalAudience(audience: string) {
   if (isShortInput(audience)) {
-    return "chi sente il bisogno di cambiare ma non ha ancora una strada chiara";
+    return "chi vuole fare una scelta migliore ma non ha ancora una strada chiara";
   }
 
-  return `chi si riconosce in questa situazione: ${softenSentence(audience)}`;
+  return `persone che si riconoscono in questa situazione: ${softenSentence(audience)}`;
 }
 
-function reframePainPoint(problem: string, niche: string, audienceView: string) {
-  if (isShortInput(problem)) {
-    return `il blocco nasce quando ${audienceView} prova ad affrontare ${niche} con troppe informazioni, poca guida e aspettative difficili da mantenere`;
+function makeNaturalProblem(problem: string, category: NicheCategory) {
+  if (!isShortInput(problem)) {
+    return `sentirsi bloccati perché ${softenSentence(problem)} diventa un ostacolo concreto nella quotidianità`;
   }
 
-  return `il problema non è solo "${softenSentence(problem)}", ma il modo in cui quella difficoltà crea rinvii, dubbi e perdita di continuità`;
+  const variants: Record<NicheCategory, string[]> = {
+    wellness: ["iniziare con entusiasmo e poi perdere costanza dopo pochi giorni", "sentirsi confusi tra regole, rinunce e consigli opposti"],
+    beauty: ["non vedere un risultato curato e uniforme nonostante tentativi diversi", "sentire che la routine non valorizza davvero la propria immagine"],
+    localFood: ["avere qualcosa di valido da offrire ma non riuscire a far venire voglia di provarlo", "pubblicare contenuti che mostrano il prodotto ma non raccontano l'esperienza"],
+    realEstate: ["presentare un immobile senza far percepire davvero il suo valore", "attirare curiosi invece di persone realmente interessate"],
+    knowledge: ["avere competenze utili ma non riuscire a spiegarle in modo semplice", "creare contenuti che informano ma non costruiscono fiducia"],
+    neutral: ["avere un'offerta valida ma comunicarla in modo troppo generico", "non riuscire a trasformare un problema reale in un messaggio chiaro"]
+  };
+
+  return chooseVariant(variants[category], problem);
 }
 
-function reframeDesire(result: string) {
-  if (isShortInput(result)) {
-    return "sentire che il percorso è più leggero, concreto e finalmente gestibile";
+function makeNaturalOffer(offer: string, category: NicheCategory) {
+  const base = isShortInput(offer) ? "" : softenSentence(offer);
+  const variants: Record<NicheCategory, string[]> = {
+    wellness: ["un percorso pensato per creare abitudini più sostenibili", "una guida semplice per ritrovare costanza senza estremismi"],
+    beauty: ["un percorso pensato per ottenere un risultato più curato, visibile e armonioso", "un servizio che valorizza la routine e l'immagine personale"],
+    localFood: ["un'esperienza che fa venire voglia di prenotare e provare dal vivo", "un modo per trasformare prodotto, atmosfera e gusto in desiderio"],
+    realEstate: ["una presentazione più chiara per valorizzare l'immobile e attirare persone interessate", "un supporto per rendere più comprensibile il valore della casa"],
+    knowledge: ["un percorso guidato per trasformare competenze in risultati comprensibili", "una proposta che aiuta a capire il valore prima della vendita"],
+    neutral: ["una soluzione più chiara per rendere l'offerta comprensibile", "un percorso che aiuta a passare dalla confusione a una scelta più concreta"]
+  };
+
+  if (base.length > 22) {
+    return `una proposta pensata per rendere più semplice e concreto il percorso legato a ${base}`;
   }
 
-  return `arrivare a ${softenSentence(result)} con meno confusione e più fiducia nel processo`;
+  return chooseVariant(variants[category], offer);
 }
 
-function buildFalseBelief(niche: string, result: string) {
-  const desired = isShortInput(result) ? "vedere un cambiamento reale" : softenSentence(result);
-  return `rivoluzionare tutto, fare scelte estreme o aspettare il momento perfetto per ${desired}`;
-}
-
-function buildCommonMistake(problem: string, offer: string) {
-  if (isShortInput(problem)) {
-    return `cercare subito la soluzione più completa invece di costruire un primo passo semplice attorno a ${offer}`;
+function makeNaturalResult(result: string, category: NicheCategory) {
+  if (!isShortInput(result)) {
+    return `avvicinarsi a quel risultato con meno confusione e più continuità`;
   }
 
-  return `trattare il blocco come un difetto personale invece di semplificare il percorso con una guida più chiara`;
+  const variants: Record<NicheCategory, string[]> = {
+    wellness: ["sentirsi meglio nel proprio corpo e ritrovare costanza", "rimettersi in forma con un approccio più sostenibile"],
+    beauty: ["sentirsi più curati e valorizzati", "vedere un risultato più ordinato, luminoso e naturale"],
+    localFood: ["far venire voglia di prenotare", "portare più persone interessate a vivere l'esperienza"],
+    realEstate: ["attirare persone realmente interessate", "far percepire meglio il valore dell'immobile"],
+    knowledge: ["far capire il valore della proposta prima della vendita", "creare fiducia e rendere più chiaro il prossimo passo"],
+    neutral: ["comunicare il valore in modo più chiaro", "parlare al pubblico giusto con un messaggio più concreto"]
+  };
+
+  return chooseVariant(variants[category], result);
 }
 
-function buildEmotionalBenefit(result: string) {
-  if (isShortInput(result)) {
-    return "sentirsi più lucidi, meno sopraffatti e più capaci di continuare anche quando l'entusiasmo cala";
-  }
+function buildFalseBelief(category: NicheCategory, result: string) {
+  const variants: Record<NicheCategory, string[]> = {
+    wellness: ["fare tutto perfettamente o rinunciare a tutto per vedere un cambiamento"],
+    beauty: ["cambiare continuamente trattamento o prodotto per vedere risultati visibili"],
+    localFood: ["pubblicare solo foto belle e aspettare che le persone prenotino"],
+    realEstate: ["mostrare tante informazioni tecniche e pensare che bastino a convincere"],
+    knowledge: ["spiegare tutto subito per dimostrare competenza"],
+    neutral: ["dire tutto in un unico contenuto per convincere più persone possibile"]
+  };
 
-  return `sentire che ${softenSentence(result)} non dipende da uno slancio momentaneo, ma da una struttura che puoi seguire`;
+  return chooseVariant(variants[category], result);
+}
+
+function buildCommonMistake(category: NicheCategory, offer: string) {
+  const variants: Record<NicheCategory, string[]> = {
+    wellness: ["cambiare piano ogni volta che cala la motivazione"],
+    beauty: ["puntare solo sul prima e dopo senza spiegare il percorso"],
+    localFood: ["mostrare il prodotto senza far immaginare il momento in cui viverlo"],
+    realEstate: ["descrivere l'immobile senza raccontare perché è una scelta sensata"],
+    knowledge: ["parlare della soluzione prima di far riconoscere il problema"],
+    neutral: ["presentare l'offerta prima di creare identificazione"]
+  };
+
+  return chooseVariant(variants[category], offer);
+}
+
+function buildEmotionalBenefit(category: NicheCategory, result: string) {
+  const variants: Record<NicheCategory, string[]> = {
+    wellness: ["sentirsi più leggeri, costanti e meno in lotta con ogni scelta"],
+    beauty: ["sentirsi più curati, sicuri e a proprio agio quando ci si guarda"],
+    localFood: ["sentire che vale la pena uscire, prenotare e vivere quel momento"],
+    realEstate: ["avere più chiarezza e meno dubbi davanti a una decisione importante"],
+    knowledge: ["sentirsi guidati, compresi e più sicuri nel fare il passo successivo"],
+    neutral: ["sentirsi meno confusi e più sicuri nel scegliere cosa fare dopo"]
+  };
+
+  return chooseVariant(variants[category], result);
 }
 
 function buildRealisticPromise(offer: string, desire: string) {
@@ -763,25 +913,116 @@ function buildNarrativeAngle(audienceView: string, painPoint: string, desire: st
 }
 
 function adaptHookForPlatform(hook: string, d: ReturnType<typeof normalizeForm>) {
-  const endings: Record<Platform, string> = {
-    Instagram: "Perfetto da salvare prima di creare il prossimo post.",
-    TikTok: "Detto in pochi secondi, questo cambia subito la prospettiva.",
-    Facebook: "È il tipo di riflessione che apre una conversazione reale.",
-    "YouTube Shorts": "Funziona bene come apertura rapida prima dell'esempio pratico.",
-    LinkedIn: "È un punto di vista utile per chi vuole comunicare con più metodo."
+  const variants: Record<Platform, string[]> = {
+    Instagram: [hook, `${hook} Salvalo prima di improvvisare.`],
+    TikTok: [hook, `${hook} Guardalo prima di ripartire da zero.`],
+    Facebook: [hook, `${hook} Parliamone con onestà.`],
+    "YouTube Shorts": [hook, `${hook} In pochi secondi si capisce il perché.`],
+    LinkedIn: [hook, `${hook} È una questione di metodo, non di rumore.`]
   };
 
-  return `${hook} ${endings[d.platform]}`;
+  return chooseVariant(variants[d.platform], hook + d.platform);
 }
 
 function isShortInput(value: string) {
-  return clean(value).split(" ").filter(Boolean).length <= 2;
+  return cleanInput(value).split(" ").filter(Boolean).length <= 2;
 }
 
 function softenSentence(value: string) {
-  return clean(value)
+  return cleanInput(value)
     .replace(/^(non riesco a|non riescono a|voglio|vuole|vorrei|ottenere|raggiungere)\s+/i, "")
     .replace(/[.!?]+$/g, "");
+}
+
+function cleanInput(value: string) {
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/^[-–—:;,.!?]+|[-–—:;,.!?]+$/g, "");
+}
+
+function chooseVariant(options: string[], seed: string | number) {
+  const numericSeed = typeof seed === "number"
+    ? seed
+    : seed.split("").reduce((total, char) => total + char.charCodeAt(0), 0);
+
+  return options[Math.abs(numericSeed) % options.length];
+}
+
+function buildDailyScene(category: NicheCategory, platform: Platform) {
+  const variants: Record<NicheCategory, string[]> = {
+    wellness: ["Ogni lunedì riparti convinto, poi bastano tre giorni complicati per perdere il filo."],
+    beauty: ["Ti guardi allo specchio e capisci che non vuoi stravolgere tutto: vuoi solo vederti più curato."],
+    localFood: ["Qualcuno vede una foto, ma non sente ancora il profumo, l'atmosfera o il motivo per prenotare."],
+    realEstate: ["Una casa può essere valida, ma se viene raccontata male sembra solo un annuncio come tanti."],
+    knowledge: ["Apri il foglio delle idee, sai di avere valore da condividere, ma non sai da quale messaggio partire."],
+    neutral: ["Sai che la proposta è valida, ma quando devi raccontarla diventa tutto più freddo e meno chiaro."]
+  };
+
+  const scene = chooseVariant(variants[category], platform);
+  return platform === "LinkedIn" ? `${scene} Questo è il punto in cui serve più metodo.` : scene;
+}
+
+function buildContrastHook(category: NicheCategory) {
+  const variants: Record<NicheCategory, string[]> = {
+    wellness: ["Piccoli passi fatti bene battono mille partenze drastiche lasciate a metà."],
+    beauty: ["Non serve inseguire il cambiamento più evidente: spesso vince il risultato più armonioso."],
+    localFood: ["Un buon prodotto fa assaggiare. Un buon contenuto fa venire voglia di esserci."],
+    realEstate: ["Non vince l'annuncio con più dettagli. Vince quello che rende la scelta più chiara."],
+    knowledge: ["Non conquista chi spiega di più. Conquista chi rende semplice capire il valore."],
+    neutral: ["Non serve dire tutto. Serve dire la cosa giusta nel momento giusto."]
+  };
+
+  return chooseVariant(variants[category], category);
+}
+
+function avoidMechanicalPhrasing(text: string, d: ReturnType<typeof normalizeForm>, index: number) {
+  const fallback = [
+    "Il punto non è aggiungere altro rumore. È rendere più chiaro il prossimo passo.",
+    "Quando il messaggio diventa semplice, anche la scelta sembra meno pesante.",
+    "Le persone non cercano solo una soluzione. Cercano un motivo per fidarsi.",
+    "Prima viene l'identificazione. Poi arriva la proposta.",
+    "Un contenuto funziona quando trasforma confusione in una direzione concreta."
+  ];
+  const rawInputs = [d.niche, d.offer, d.audience, d.problem, d.result].filter((value) => value.length > 3);
+  const mechanicalPatterns = [
+    "se lavori in",
+    "il tuo pubblico sente che",
+    "verso creare",
+    "può diventare",
+    "capisce meglio",
+    "non percepisce",
+    "nel tuo caso il pubblico",
+    "con tono",
+    "se l'obiettivo"
+  ];
+  const lower = text.toLowerCase();
+  const repeatsRawInput = rawInputs.some((input) => countOccurrences(lower, input.toLowerCase()) > 2);
+  const hasMechanicalPattern = mechanicalPatterns.some((pattern) => lower.includes(pattern));
+  const tooLongSentence = text.split(/[.!?]/).some((sentence) => sentence.trim().split(" ").length > 38);
+  const cleaned = polishSentence(text);
+
+  if (hasMechanicalPattern || repeatsRawInput || tooLongSentence) {
+    return chooseVariant(fallback, seedFrom(d) + index);
+  }
+
+  return cleaned;
+}
+
+function polishSentence(value: string) {
+  return value
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").replace(/\s+([,.!?;:])/g, "$1").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s+([,.!?;:])/g, "$1")
+    .replace(/([.!?])([A-ZÀ-Ù])/g, "$1 $2")
+    .trim();
+}
+
+function countOccurrences(text: string, search: string) {
+  if (!search) return 0;
+  return text.split(search).length - 1;
 }
 
 function lowerFirst(value: string) {
