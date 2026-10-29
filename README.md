@@ -1,63 +1,48 @@
 # Generatore Contenuti Social PRO
 
-Tool web Next.js pronto per Vercel che genera contenuti social reali tramite OpenAI, usando una route API server-side e validazione Zod per input e output.
+Tool Next.js 15 per generare hook, caption, CTA, reel, caroselli e idee editoriali.
 
-## Stack
+## Stato reale del generatore (audit 29/10/2026)
 
-- Next.js App Router
-- React
-- TypeScript
-- Tailwind CSS
-- API route server-side
-- OpenAI API
-- Zod
+Il componente attualmente renderizzato da `app/page.tsx` è `components/social-content-generator.tsx`: il pulsante Genera usa `generateLocalContent(form)` nel browser, senza chiamare API esterne. Esiste anche `POST /api/generate-social` che usa OpenAI lato server, ma il percorso UI ispezionato non lo invoca. La route rimane nel codice: non attribuire al frontend attuale generazioni AI via API, né dare per certo che la route non sia usata da client esterni.
 
-## Installazione
+## Avvio
 
 ```bash
 npm install
-```
-
-## Variabili ambiente
-
-Crea un file `.env.local` partendo dall'esempio:
-
-```bash
-cp .env.local.example .env.local
-```
-
-Inserisci la tua chiave OpenAI:
-
-```env
-OPENAI_API_KEY=la-tua-chiave
-OPENAI_TEXT_MODEL=gpt-4.1
-```
-
-La chiave resta solo lato server. Il frontend chiama esclusivamente `POST /api/generate-social` e non usa variabili `NEXT_PUBLIC_OPENAI_API_KEY`.
-
-## Avvio locale
-
-```bash
 npm run dev
+npm run lint
+npx tsc --noEmit
+node --experimental-strip-types --test tests/protected-access.test.mjs
 ```
 
-Apri `http://localhost:3000`.
+## Accesso protetto (PR in review; NON attivo in produzione)
 
-## Build
+Questo branch propone lo stesso schema di accesso del tool UGC, **senza** abilitare ancora la vendita: WordPress verifica l'acquisto EDD, emette un token HS256 a vita breve, `GET /access?token=...` lo valida e imposta un cookie HttpOnly di 6 ore. Il middleware protegge pagina e route `/api/generate-social`; `/access` e `/access-denied` sono gli unici percorsi applicativi pubblici. Nessuna chiave è salvata nel repository.
 
-```bash
-npm run build
-```
+Configurare **soltanto** nelle variabili server Vercel, dopo avere verificato il prodotto EDD reale:
 
-## Deploy su Vercel
+- `PELLINIDIGITAL_TOOL_ACCESS_SECRET`: segreto lungo casuale e **unico** per questo tool, uguale alla costante server WordPress `PELLINIDIGITAL_SOCIAL_TOOL_ACCESS_SECRET`.
+- `PELLINIDIGITAL_TOOL_ACCESS_KEY_ID`: identificatore chiave uguale a WordPress.
+- `PELLINIDIGITAL_TOKEN_ISSUER`: `https://pellinidigital.it` (deve corrispondere all'issuer WordPress).
+- `PELLINIDIGITAL_TOOL_ID`: `social-content-generator` (deve corrispondere al registry WordPress).
+- `PELLINIDIGITAL_EDD_PRODUCT_ID`: ID numerico del **prodotto EDD verificato**, NON uno Shopify e NON un numero di esempio.
 
-1. Carica il progetto su GitHub, GitLab o Bitbucket.
-2. Importa il repository su Vercel.
-3. In `Settings > Environment Variables`, aggiungi:
-   - `OPENAI_API_KEY`
-   - `OPENAI_TEXT_MODEL` con valore `gpt-4.1`
-4. Avvia il deploy.
+**Fail closed:** senza anche una sola variabile obbligatoria valida, l'accesso è negato. Non impostare un ID EDD di prova in produzione.
 
-## Funzionamento
+### Prima di un merge/deploy
 
-Il form raccoglie descrizione, piattaforma, tono e obiettivo. La route `app/api/generate-social/route.ts` valida l'input con Zod, controlla `OPENAI_API_KEY`, chiama OpenAI lato server, richiede JSON strutturato e valida nuovamente l'output prima di inviarlo al frontend.
+1. Confermare su Vercel quale repository/branch alimenta il deployment effettivo e che il piano sia idoneo all'uso commerciale.
+2. Creare/verificare il prodotto EDD pubblicato e il suo ID, file/diritti/prezzo.
+3. Configurare i segreti su WordPress (fuori repository) e Vercel; NON pubblicarli.
+4. Preparare e sottoporre a review registry WordPress, landing, Tool Hub e dashboard, mantenendo `In arrivo` finché non è tutto verificato.
+5. Verificare con test manuali: non autenticato, non acquirente, acquirente, JWT scaduto/manomesso, accesso diretto a `/` e `/api/generate-social`, mobile, login/logout, sessione scaduta, checkout EDD test.
+6. Solo dopo approvazione esplicita valutare merge/deploy e pagamento reale controllato.
+
+## Route OpenAI esistente
+
+`POST /api/generate-social` usa `OPENAI_API_KEY` e `OPENAI_TEXT_MODEL` quando configurate; senza chiave restituisce errore. Non è richiesta per il generatore locale. Dopo l'introduzione del middleware la route non deve essere accessibile senza cookie valido. Se si decide di non usare mai l'API, valutare la rimozione in un intervento separato, dopo audit degli utilizzatori.
+
+## Deploy
+
+Non distribuire questo branch direttamente in produzione senza review di sicurezza e senza completare l'integrazione WordPress/EDD. Il solo superamento di lint, typecheck e test JWT **non** prova che l'acquisto o l'accesso reale funzionino.
