@@ -1,8 +1,8 @@
 export const ACCESS_COOKIE_NAME = "pd_social_tool_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 6;
 
-const MAX_ACCESS_TOKEN_TTL_SECONDS = 90 + CLOCK_SKEW_SECONDS;
 const CLOCK_SKEW_SECONDS = 60;
+const MAX_ACCESS_TOKEN_TTL_SECONDS = 90 + CLOCK_SKEW_SECONDS;
 const MAX_TOKEN_AGE_SECONDS = 10 * 60;
 
 type JwtHeader = {
@@ -130,7 +130,7 @@ async function signInput(signingInput: string, secret: string) {
 async function verifySignature(signingInput: string, signature: Uint8Array, secret: string) {
   const key = await importHmacKey(secret);
 
-  return crypto.subtle.verify("HMAC", key, signature, new TextEncoder().encode(signingInput));
+  return crypto.subtle.verify("HMAC", key, new Uint8Array(signature), new TextEncoder().encode(signingInput));
 }
 
 function readJwtParts(token: string) {
