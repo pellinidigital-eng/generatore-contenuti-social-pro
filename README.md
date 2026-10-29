@@ -41,7 +41,7 @@ Configurare **soltanto** nelle variabili server Vercel, dopo avere verificato il
 
 ## Route OpenAI esistente
 
-`POST /api/generate-social` usa `OPENAI_API_KEY` e `OPENAI_TEXT_MODEL` quando configurate; senza chiave restituisce errore. Non è richiesta per il generatore locale. Dopo l'introduzione del middleware la route non deve essere accessibile senza cookie valido. Se si decide di non usare mai l'API, valutare la rimozione in un intervento separato, dopo audit degli utilizzatori.
+`POST /api/generate-social` è **disabilitata di default** (404) anche per gli utenti autenticati, per evitare spese API involontarie. Per attivarla deliberatamente occorre impostare lato server `SOCIAL_PRO_ENABLE_OPENAI_API=true` oltre a `OPENAI_API_KEY` e all'eventuale `OPENAI_TEXT_MODEL`; prima servono controllo costi, rate limit e review. Il generatore locale non richiede alcuna chiave. Il middleware protegge comunque la route con cookie valido. Non attivare la flag durante il lancio senza una decisione commerciale esplicita.
 
 ## Deploy
 
