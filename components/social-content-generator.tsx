@@ -450,7 +450,7 @@ function buildCaptions(d: ReturnType<typeof normalizeForm>) {
   const captions = [
     {
       title: "Storytelling breve",
-      text: `${s.storyOpening}
+      text: `${s.narrativeAngle}
 
 All'inizio sembra un dettaglio piccolo. Poi diventa il motivo per cui si rimanda, si cambia idea o si riparte sempre da capo. Non succede perché le persone non tengono davvero al risultato: spesso succede perché il percorso sembra troppo pieno di passaggi, dubbi e decisioni da prendere.
 
