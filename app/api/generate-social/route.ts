@@ -7,6 +7,11 @@ import { generateSocialInputSchema, socialContentAISchema, socialContentSchema }
 const ERROR_MESSAGE = "Si e verificato un errore nella generazione. Riprova tra qualche secondo.";
 
 export async function POST(request: Request) {
+  // The current UI generates locally. Prevent accidental API spend unless explicitly enabled.
+  if (process.env.SOCIAL_PRO_ENABLE_OPENAI_API !== "true") {
+    return NextResponse.json({ error: "API non disponibile." }, { status: 404 });
+  }
+
   try {
     const body = await request.json();
     const input = generateSocialInputSchema.parse(body);
