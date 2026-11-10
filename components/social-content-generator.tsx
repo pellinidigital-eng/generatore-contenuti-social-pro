@@ -771,6 +771,7 @@ function createStrategicContext(input: StrategicInput) {
     realisticPromise,
     realisticPromiseLower: lowerFirst(realisticPromise),
     narrativeAngle,
+    storyOpening: dailyScene,
     dailyScene,
     contrastHook
   };
