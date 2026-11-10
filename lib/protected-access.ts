@@ -128,7 +128,10 @@ async function signInput(signingInput: string, secret: string) {
 async function verifySignature(signingInput: string, signature: Uint8Array, secret: string) {
   const key = await importHmacKey(secret);
 
-  return crypto.subtle.verify("HMAC", key, signature, new TextEncoder().encode(signingInput));
+  // Preserve signature bytes in an ArrayBuffer-backed view for WebCrypto typings.
+  const signatureBytes = Uint8Array.from(signature);
+
+  return crypto.subtle.verify("HMAC", key, signatureBytes, new TextEncoder().encode(signingInput));
 }
 
 function readJwtParts(token: string) {
